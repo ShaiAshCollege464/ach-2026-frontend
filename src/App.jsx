@@ -2,6 +2,12 @@ import {useEffect, useState} from 'react'
 import './App.css'
 import axios from "axios";
 
+
+
+const BACKEND_URL = "https://ach-2026-server.onrender.com/";
+// const BACKEND_URL = "http://localhost:8085/";
+
+
 function App() {
 
     const [workers, setWorkers] = useState([]);
@@ -11,10 +17,10 @@ function App() {
 
 
     useEffect(() => {
-        axios.get("https://ach-2026-server.onrender.com/get-workers-by-manager").then(resposne => {
+        axios.get(BACKEND_URL + "get-workers-by-manager").then(resposne => {
             setWorkers(resposne.data);
         })
-        axios.get("https://ach-2026-server.onrender.com/get-teams").then(resposne => {
+        axios.get(BACKEND_URL + "get-teams").then(resposne => {
             setTeams(resposne.data);
         })
 
@@ -29,7 +35,7 @@ function App() {
                 workers.map(item => {
                     return (
                         <div onClick={() => {
-                            axios.get("https://ach-2026-server.onrender.com/get-worker-details?workerId=" + item.id)
+                            axios.get(BACKEND_URL + "get-worker-details?workerId=" + item.id)
                                 .then(response => {
                                     setSelectedWorker(response.data);
                                     setCurrentTeam(response.data.teamId);
@@ -59,7 +65,7 @@ function App() {
 
                             <select value={currentTeam} onChange={(event => {
                                 setCurrentTeam(event.target.value)
-                                axios.get("https://ach-2026-server.onrender.com/change-team?workerId=" + selectedWorker.id + "&teamId=" + event.target.value)
+                                axios.get(BACKEND_URL + "change-team?workerId=" + selectedWorker.id + "&teamId=" + event.target.value)
                                     .then(response => {
                                     })
                             })}>

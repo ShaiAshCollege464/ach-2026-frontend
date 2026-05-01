@@ -4,12 +4,12 @@ import axios from "axios";
 
 
 
-const BACKEND_URL = "https://ach-2026-server.onrender.com/";
-// const BACKEND_URL = "http://localhost:8085/";
+
+const BACKEND_URL = import.meta.env.BACKEND_URL || "http://localhost:8085/";
 
 
 function App() {
-
+    console.log("BACKEND_URL", BACKEND_URL)
     const [workers, setWorkers] = useState([]);
     const [selectedWorker, setSelectedWorker] = useState(null);
     const [teams, setTeams] = useState([]);

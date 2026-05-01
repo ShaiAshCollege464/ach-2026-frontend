@@ -11,10 +11,10 @@ function App() {
 
 
     useEffect(() => {
-        axios.get("http://localhost:8085/get-workers-by-manager").then(resposne => {
+        axios.get("https://ach-2026-server.onrender.com/get-workers-by-manager").then(resposne => {
             setWorkers(resposne.data);
         })
-        axios.get("http://localhost:8085/get-teams").then(resposne => {
+        axios.get("https://ach-2026-server.onrender.com/get-teams").then(resposne => {
             setTeams(resposne.data);
         })
 
@@ -29,7 +29,7 @@ function App() {
                 workers.map(item => {
                     return (
                         <div onClick={() => {
-                            axios.get("http://localhost:8085/get-worker-details?workerId=" + item.id)
+                            axios.get("https://ach-2026-server.onrender.com/get-worker-details?workerId=" + item.id)
                                 .then(response => {
                                     setSelectedWorker(response.data);
                                     setCurrentTeam(response.data.teamId);
@@ -59,7 +59,7 @@ function App() {
 
                             <select value={currentTeam} onChange={(event => {
                                 setCurrentTeam(event.target.value)
-                                axios.get("http://localhost:8085/change-team?workerId=" + selectedWorker.id + "&teamId=" + event.target.value)
+                                axios.get("https://ach-2026-server.onrender.com/change-team?workerId=" + selectedWorker.id + "&teamId=" + event.target.value)
                                     .then(response => {
                                     })
                             })}>

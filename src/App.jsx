@@ -17,7 +17,7 @@ function App() {
 
 
     useEffect(() => {
-        axios.get(BACKEND_URL + "get-workers-by-manager").then(resposne => {
+        axios.get(BACKEND_URL + "get-workers-by-manager?token=1070477").then(resposne => {
             setWorkers(resposne.data);
         })
         axios.get(BACKEND_URL + "get-teams").then(resposne => {
@@ -28,26 +28,78 @@ function App() {
 
     return (
         <>
-            <div>
-                Worker
+            <div style={{
+                fontWeight: "bold",
+                fontSize: "26px",
+                marginBottom: "16px",
+                marginTop: "20px"
+            }}>
+                Worker List
             </div>
             {
-                workers.map(item => {
-                    return (
-                        <div onClick={() => {
-                            axios.get(BACKEND_URL + "get-worker-details?workerId=" + item.id)
-                                .then(response => {
-                                    setSelectedWorker(response.data);
-                                    setCurrentTeam(response.data.teamId);
-                                })
-                        }}>
-                            {item.firstName}
-                        </div>
-                    )
-                })
+                <table style={{
+                    border: "1px solid white",
+                    padding: "10px"
+                }}>
+                    <tr>
+                        <th>
+                            First Name
+                        </th>
+                        <th>
+                            Last Name
+                        </th>
+                        <th>
+                            Team
+                        </th>
+                        <th>
+                            Show Details
+                        </th>
+
+                    </tr>
+                    {
+                        workers.map(item => {
+                            return (
+                                <tr>
+                                    <td>
+                                        {item.firstName}
+                                    </td>
+                                    <td>
+                                        {item.lastName}
+                                    </td>
+                                    <td>
+                                        {item.teamName}
+                                    </td>
+                                    <td>
+                                        <button  onClick={() => {
+                                            if (selectedWorker && selectedWorker.id == item.id) {
+                                                setSelectedWorker(null)
+                                                setCurrentTeam(null)
+                                            } else {
+                                                axios.get(BACKEND_URL + "get-worker-details?workerId=" + item.id)
+                                                    .then(response => {
+                                                        setSelectedWorker(response.data);
+                                                        setCurrentTeam(response.data.teamId);
+                                                    })
+
+                                            }
+                                        }}>
+                                            {
+                                                selectedWorker && selectedWorker.id == item.id ? "Hide Details" : "Show Details"
+                                            }
+                                        </button>
+                                    </td>
+                                </tr>
+                            )
+                        })
+
+                    }
+                </table>
+
             }
 
-            <div>
+            <div style={{
+                marginTop: "30px"
+            }}>
                 {
                     selectedWorker &&
                     <div>

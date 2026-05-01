@@ -34,6 +34,56 @@ function App() {
                 marginBottom: "16px",
                 marginTop: "20px"
             }}>
+                Teams List
+            </div>
+            {
+                <table style={{
+                    border: "1px solid white",
+                    padding: "10px"
+                }}>
+                    <tr>
+                        <th>
+                           Name
+                        </th>
+                        <th>
+                            Workers Count
+                        </th>
+                        <th>
+                            Show Details
+                        </th>
+
+                    </tr>
+                    {
+                        teams.map(item => {
+                            return (
+                                <tr>
+                                    <td>
+                                        {item.name}
+                                    </td>
+                                    <td>
+                                        {item.workersCount}
+                                    </td>
+                                    <td>
+                                        <button  onClick={() => {
+                                        }}>
+                                            Show
+                                        </button>
+                                    </td>
+                                </tr>
+                            )
+                        })
+
+                    }
+                </table>
+
+            }
+
+            <div style={{
+                fontWeight: "bold",
+                fontSize: "26px",
+                marginBottom: "16px",
+                marginTop: "20px"
+            }}>
                 Worker List
             </div>
             {

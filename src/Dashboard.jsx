@@ -1,0 +1,207 @@
+import {useEffect, useState} from 'react'
+import './App.css'
+import axios from "axios";
+
+
+const BACKEND_URL = import.meta.env.BACKEND_URL || "http://localhost:8085/";
+
+function normalizeWorker(worker) {
+    const teamEntity = worker.teamEntity;
+    return {
+        ...worker,
+        teamName: worker.teamName || teamEntity?.name || "",
+        teamId: worker.teamId || teamEntity?.id || null,
+    };
+}
+
+function normalizeWorkers(workers) {
+    return Array.isArray(workers) ? workers.map(normalizeWorker) : [];
+}
+
+
+function Dashboard() {
+    const [workers, setWorkers] = useState([]);
+    const [selectedWorker, setSelectedWorker] = useState(null);
+    const [teams, setTeams] = useState([]);
+    const [selectedTeam, setSelectedTeam] = useState(null);
+    const [currentManagerToken, setCurrentManagerToken] = useState("");
+
+    useEffect(() => {
+        //TODO: from the server I will send an ArrayList of the teams that the manager workers in
+        axios.get(BACKEND_URL + "get-teams").then(response => {
+            setTeams(Array.isArray(response.data) ? response.data : []);
+        }).catch(error => {
+            console.error("Failed to load teams", error);
+            setTeams([]);
+        })
+
+    }, []);
+
+    function getInfo(e){
+        if (e) e.preventDefault();
+        axios.get(BACKEND_URL + "get-workers-by-manager?token="+currentManagerToken).then(response => {
+            console.log(response.data)
+            setWorkers(normalizeWorkers(response.data));
+            setCurrentManagerToken("");
+        }).catch(error => {
+            console.error("Failed to load workers", error);
+            setWorkers([]);
+        })
+    }
+    const visibleWorkers = selectedTeam
+        ? workers.filter(worker => worker.teamId == selectedTeam.id)
+        : workers;
+
+    return (
+
+        <main className="app-shell">
+
+            <section className="page-header">
+                <div>
+                    <p className="eyebrow">Team dashboard</p>
+                    <h1>Workers Management</h1>
+                </div>
+            </section>
+
+            <section className="panel token-management">
+                <div className="section-header">
+                    <div>
+                        <h2>Token Management</h2>
+                    </div>
+                </div>
+                <div className="token-search-container">
+                    <form onSubmit={getInfo} className="token-form">
+                        <input
+                            type="text"
+                            placeholder="Enter your token..."
+                            value={currentManagerToken}
+                            onChange={(e) => setCurrentManagerToken(e.target.value)}
+                            className="token-input"
+                        />
+                        <button type="submit" className="action-button">
+                            Get Info
+                        </button>
+                    </form>
+                </div>
+            </section>
+            <section className="panel">
+                <div className="section-header">
+                    <div>
+                        <h2>Teams List</h2>
+                        <p>{teams.length} teams available</p>
+                    </div>
+                </div>
+
+                <div className="table-wrap">
+                    <table className="data-table">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Workers Count</th>
+                            <th>Show Details</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {teams.map(item => (
+                            <tr key={item.id} className={selectedTeam && selectedTeam.id == item.id ? "selected-row" : ""}>
+                                <td className="name-cell">{item.name}</td>
+                                <td>
+                                    <span className="count-pill">{item.workersCount}</span>
+                                </td>
+                                <td>
+                                    <button className="action-button" onClick={() => {
+                                        if (selectedTeam && selectedTeam.id == item.id) {
+                                            setSelectedTeam(null);
+                                        } else {
+                                            setSelectedTeam(item);
+                                        }
+                                        setSelectedWorker(null);
+                                    }}>
+                                        {selectedTeam && selectedTeam.id == item.id ? "Show All" : "Show"}
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section className="panel">
+                <div className="section-header">
+                    <div>
+                        <h2>{selectedTeam ? selectedTeam.name + " Workers" : "Worker List"}</h2>
+                        <p>{visibleWorkers.length} workers shown</p>
+                    </div>
+                    {selectedTeam && (
+                        <button className="secondary-button" onClick={() => setSelectedTeam(null)}>
+                            Clear Filter
+                        </button>
+                    )}
+                </div>
+
+                <div className="table-wrap">
+                    <table className="data-table">
+                        <thead>
+                        <tr>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Team</th>
+                            <th>Show Details</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {visibleWorkers.map(item => (
+                            <tr key={item.id} className={selectedWorker && selectedWorker.id == item.id ? "selected-row" : ""}>
+                                <td className="name-cell">{item.firstName}</td>
+                                <td>{item.lastName}</td>
+                                <td>{item.teamName}</td>
+                                <td>
+                                    <button className="action-button" onClick={() => {
+                                        if (selectedWorker && selectedWorker.id == item.id) {
+                                            setSelectedWorker(null)
+                                        } else {
+                                            axios.get(BACKEND_URL + "get-worker-details?workerId=" + item.id)
+                                                .then(response => {
+                                                    const workerDetails = normalizeWorker(response.data);
+                                                    setSelectedWorker(workerDetails);
+                                                }).catch(error => {
+                                                console.error("Failed to load worker details", error);
+                                                setSelectedWorker(item);
+                                            })
+                                        }
+                                    }}>
+                                        {selectedWorker && selectedWorker.id == item.id ? "Hide Details" : "Show Details"}
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                        {visibleWorkers.length === 0 && (
+                            <tr>
+                                <td className="empty-cell" colSpan="4">No workers to show</td>
+                            </tr>
+                        )}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+
+            {selectedWorker && (
+                <section className="details-panel">
+                    <div>
+                        <p className="eyebrow">Worker Details</p>
+                        <h2>{selectedWorker.firstName} {selectedWorker.lastName}</h2>
+                    </div>
+
+                    <div className="details-field">
+                        <span>Team</span>
+                        <strong>{selectedWorker.teamName || "No team"}</strong>
+                    </div>
+                </section>
+            )}
+        </main>
+    )
+}
+
+export default Dashboard

@@ -28,15 +28,14 @@ function Login() {
                                     setErrorMessage("");
                                     const loginData = `Login?username=${username}&password=${password}`;
                                     const resultLogin = await axios.get(BACKEND_URL + loginData).then(response => {
-                                            if (response.success === true) {
+                                            if (response.data.success === true) {
                                                 setUsername("");
                                                 setPassword("");
                                                 setErrorMessage("Login good");
                                                 navigate("/");
                                             } else {
-                                                setErrorMessage("Login failed");
+                                                setErrorMessage("Wrong Info");
                                             }
-                                            setErrorMessage("Wrong Info");
                                         }
                                     )
                                 }

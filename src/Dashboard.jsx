@@ -3,7 +3,7 @@ import './App.css'
 import axios from "axios";
 
 
-const BACKEND_URL = import.meta.env.BACKEND_URL || "http://localhost:8085/";
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.BACKEND_URL || "http://localhost:8085/";
 
 function normalizeWorker(worker) {
     const teamEntity = worker.teamEntity;
@@ -35,11 +35,13 @@ function Dashboard() {
             setTeams([]);
         })
 
+        getTeammates();
+
     }, []);
 
-    function getInfo(e){
-        if (e) e.preventDefault();
-        axios.get(BACKEND_URL + "get-workers-by-manager?token="+currentManagerToken).then(response => {
+    const getTeammates = () => {
+        axios.defaults.withCredentials = true;
+        axios.get(BACKEND_URL + "get-workers-by-manager").then(response => {
             console.log(response.data)
             setWorkers(normalizeWorkers(response.data));
             setCurrentManagerToken("");
@@ -63,27 +65,6 @@ function Dashboard() {
                 </div>
             </section>
 
-            <section className="panel token-management">
-                <div className="section-header">
-                    <div>
-                        <h2>Token Management</h2>
-                    </div>
-                </div>
-                <div className="token-search-container">
-                    <form onSubmit={getInfo} className="token-form">
-                        <input
-                            type="text"
-                            placeholder="Enter your token..."
-                            value={currentManagerToken}
-                            onChange={(e) => setCurrentManagerToken(e.target.value)}
-                            className="token-input"
-                        />
-                        <button type="submit" className="action-button">
-                            Get Info
-                        </button>
-                    </form>
-                </div>
-            </section>
             <section className="panel">
                 <div className="section-header">
                     <div>

@@ -3,7 +3,7 @@ import './Login.css'
 import {useNavigate} from "react-router-dom";
 import axios from "axios";
 
-const BACKEND_URL = import.meta.env.BACKEND_URL || "http://localhost:8085/";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.BACKEND_URL || "http://localhost:8085/";
 
 function Login() {
     const [username, setUsername] = useState("");
@@ -27,8 +27,9 @@ function Login() {
                                 } else if (username.length > 3 && password.length > 3) {
                                     setErrorMessage("");
                                     const loginData = `Login?username=${username}&password=${password}`;
+                                    axios.defaults.withCredentials = true;
                                     const resultLogin = await axios.get(BACKEND_URL + loginData).then(response => {
-                                            if (response.success === true) {
+                                            if (response.data.success === true) {
                                                 setUsername("");
                                                 setPassword("");
                                                 setErrorMessage("Login good");

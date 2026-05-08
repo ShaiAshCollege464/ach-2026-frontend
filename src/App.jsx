@@ -3,6 +3,7 @@ import Login from "./Login.jsx";
 import Dashboard, {BACKEND_URL} from "./Dashboard.jsx";
 import {useEffect, useState} from "react";
 import axios from "axios";
+import TeamDetails from "./TeamDetails.jsx";
 
 function App() {
     const [signedIn, setSignedIn] = useState(false);
@@ -24,7 +25,7 @@ function App() {
                         :
                         <Route path="/" element={<Login />} />
                 }
-
+                <Route path={"team/:id"} element={<TeamDetails />}/>
             </Routes>
                 </BrowserRouter>
         </div>

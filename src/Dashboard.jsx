@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react'
 import './App.css'
 import axios from "axios";
+import {useNavigate} from "react-router-dom";
 
 
 export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.BACKEND_URL || "http://localhost:8085/";
@@ -25,6 +26,7 @@ function Dashboard() {
     const [teams, setTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [currentManagerToken, setCurrentManagerToken] = useState("");
+    const navigate = useNavigate();
 
     useEffect(() => {
         //TODO: from the server I will send an ArrayList of the teams that the manager workers in
@@ -91,14 +93,9 @@ function Dashboard() {
                                 </td>
                                 <td>
                                     <button className="action-button" onClick={() => {
-                                        if (selectedTeam && selectedTeam.id == item.id) {
-                                            setSelectedTeam(null);
-                                        } else {
-                                            setSelectedTeam(item);
-                                        }
-                                        setSelectedWorker(null);
+                                        navigate("/team/" + item.id)
                                     }}>
-                                        {selectedTeam && selectedTeam.id == item.id ? "Show All" : "Show"}
+                                        To details page
                                     </button>
                                 </td>
                             </tr>

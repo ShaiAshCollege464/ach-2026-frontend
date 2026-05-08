@@ -7,10 +7,13 @@ function TeamDetails (props) {
     const { id } = useParams();
     const [details, setDetails] = useState(null)
     const [showOnlyMyWorkers, setShowOnlyMyWorkers] = useState(false);
+    const [editMode, setEditMode] = useState(false);
+    const [newTeamName, setNewTeamName] = useState("")
 
     useEffect(() => {
         axios.get(BACKEND_URL + "/team-details?id=" +id).then(response => {
             setDetails(response.data);
+            setNewTeamName(response.data.team.name)
         })
     }, []);
 
@@ -21,7 +24,32 @@ function TeamDetails (props) {
             {
                 details &&
                 <>
-                    Team {details.team.name}
+                    Team
+                    {
+                        editMode ?
+                            <>
+                                <input value={newTeamName} onChange={(event) => {
+                                    setNewTeamName(event.target.value)
+                                }}/>
+                                <button onClick={() => {
+                                    axios.get(BACKEND_URL + "/update-team?id=" + id + "&name=" + newTeamName).then(response => {
+                                        setDetails(response.data);
+                                        setEditMode(false)
+                                    })
+                                }}>
+                                    Save
+                                </button>
+                            </>
+                            :
+                            <>
+                                {details.team.name}
+                            </>
+                    }
+                    <button onClick={() => {
+                        setEditMode(!editMode)
+                    }}>
+                        Edit
+                    </button>
                     <br/>
                     Workers count: {details.team.workers.length}
                     <br/>

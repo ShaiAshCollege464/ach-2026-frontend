@@ -1,115 +1,166 @@
-import {useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 import {useEffect, useState} from "react";
 import axios from "axios";
 import {BACKEND_URL} from "./Dashboard.jsx";
 
-function TeamDetails (props) {
+function TeamDetails() {
     const { id } = useParams();
-    const [details, setDetails] = useState(null)
+    const navigate = useNavigate();
+    const [details, setDetails] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [errorMessage, setErrorMessage] = useState("");
     const [showOnlyMyWorkers, setShowOnlyMyWorkers] = useState(false);
     const [editMode, setEditMode] = useState(false);
-    const [newTeamName, setNewTeamName] = useState("")
+    const [newTeamName, setNewTeamName] = useState("");
 
     useEffect(() => {
-        axios.get(BACKEND_URL + "/team-details?id=" +id).then(response => {
-            setDetails(response.data);
-            setNewTeamName(response.data.team.name)
-        })
-    }, []);
+        axios.defaults.withCredentials = true;
+        axios.get(BACKEND_URL + "/team-details?id=" + id)
+            .then(response => {
+                setDetails(response.data);
+                setNewTeamName(response.data.team.name);
+                setErrorMessage("");
+            })
+            .catch(error => {
+                console.error("Failed to load team details", error);
+                setErrorMessage("Team details could not be loaded");
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    }, [id]);
+
+    const workers = details?.team?.workers || [];
+    const myWorkers = workers.filter(item => item.myWorker || item.managerId == details?.myId);
+    const visibleWorkers = showOnlyMyWorkers ? myWorkers : workers;
+
+    const saveTeamName = () => {
+        axios.get(BACKEND_URL + "/update-team?id=" + id + "&name=" + encodeURIComponent(newTeamName))
+            .then(response => {
+                setDetails(response.data);
+                setNewTeamName(response.data.team.name);
+                setEditMode(false);
+            })
+            .catch(error => {
+                console.error("Failed to update team name", error);
+                setErrorMessage("Team name could not be updated");
+            });
+    };
 
     return (
-        <div style={{
-            padding: "20px"
-        }}>
-            {
-                details &&
-                <>
-                    Team
-                    {
-                        editMode ?
-                            <>
-                                <input value={newTeamName} onChange={(event) => {
-                                    setNewTeamName(event.target.value)
-                                }}/>
-                                <button onClick={() => {
-                                    axios.get(BACKEND_URL + "/update-team?id=" + id + "&name=" + newTeamName).then(response => {
-                                        setDetails(response.data);
-                                        setEditMode(false)
-                                    })
-                                }}>
-                                    Save
-                                </button>
-                            </>
-                            :
-                            <>
-                                {details.team.name}
-                            </>
-                    }
-                    <button onClick={() => {
-                        setEditMode(!editMode)
-                    }}>
-                        Edit
+        <main className="app-shell">
+            <section className="page-header team-details-header">
+                <div>
+                    <p className="eyebrow">Team details</p>
+                    {editMode ? (
+                        <input
+                            className="team-name-input"
+                            value={newTeamName}
+                            onChange={event => setNewTeamName(event.target.value)}
+                        />
+                    ) : (
+                        <h1>{details?.team?.name || "Team"}</h1>
+                    )}
+                </div>
+                <div className="header-actions">
+                    {editMode ? (
+                        <button className="action-button" onClick={saveTeamName}>
+                            Save
+                        </button>
+                    ) : (
+                        <button className="secondary-button" onClick={() => setEditMode(true)} disabled={!details}>
+                            Edit
+                        </button>
+                    )}
+                    <button className="secondary-button" onClick={() => navigate("/")}>
+                        Back to dashboard
                     </button>
-                    <br/>
-                    Workers count: {details.team.workers.length}
-                    <br/>
-                    {
-                        details.team.workers.length == 0 ?
-                            <>
-                                No Workers in this team
-                            </>
-                            :
-                            <>
-                                Show Only my workers
-                                <input type={"checkbox"} checked={showOnlyMyWorkers} onChange={() => {
-                                    setShowOnlyMyWorkers(!showOnlyMyWorkers)
-                                }}/>
-                                <table>
-                                    <tr>
-                                        <th>
-                                            First Name
-                                        </th>
-                                        <th>
-                                            Last Name
-                                        </th>
+                </div>
+            </section>
 
-                                        <th>
-                                            Manager
-                                        </th>
+            {isLoading && (
+                <section className="panel state-panel">
+                    <p>Loading team details...</p>
+                </section>
+            )}
 
+            {!isLoading && errorMessage && (
+                <section className="panel state-panel error-state">
+                    <p>{errorMessage}</p>
+                </section>
+            )}
+
+            {!isLoading && details && (
+                <>
+                    <section className="team-summary">
+                        <div className="summary-item">
+                            <span>Total workers</span>
+                            <strong>{workers.length}</strong>
+                        </div>
+                        <div className="summary-item">
+                            <span>My workers</span>
+                            <strong>{myWorkers.length}</strong>
+                        </div>
+                        <div className="summary-item">
+                            <span>Current view</span>
+                            <strong>{visibleWorkers.length}</strong>
+                        </div>
+                    </section>
+
+                    <section className="panel">
+                        <div className="section-header">
+                            <div>
+                                <h2>Workers in team</h2>
+                                <p>{visibleWorkers.length} workers shown</p>
+                            </div>
+                            <label className="toggle-control">
+                                <input
+                                    type="checkbox"
+                                    checked={showOnlyMyWorkers}
+                                    onChange={() => setShowOnlyMyWorkers(!showOnlyMyWorkers)}
+                                />
+                                <span>Only my workers</span>
+                            </label>
+                        </div>
+
+                        <div className="table-wrap">
+                            <table className="data-table">
+                                <thead>
+                                <tr>
+                                    <th>First Name</th>
+                                    <th>Last Name</th>
+                                    <th>Manager</th>
+                                    <th>Status</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {visibleWorkers.map(item => (
+                                    <tr key={item.id} className={item.myWorker ? "selected-row" : ""}>
+                                        <td className="name-cell">{item.firstName}</td>
+                                        <td>{item.lastName}</td>
+                                        <td>{item.managerName || "No manager"}</td>
+                                        <td>
+                                            <span className={item.myWorker ? "status-pill owned" : "status-pill"}>
+                                                {item.myWorker ? "My worker" : "Team worker"}
+                                            </span>
+                                        </td>
                                     </tr>
-                                    {
-                                        details.team.workers.filter(item => {
-                                            if (!showOnlyMyWorkers) {
-                                                return true;
-                                            } else {
-                                                return item.managerId == details.myId ;
-                                            }
-                                        }).map(item => {
-                                            return (
-                                                <tr style={{
-                                                    color: item.myWorker ? "blue" : "black"
-                                                }}>
-                                                    <td>
-                                                        {item.firstName}
-                                                    </td>
-                                                    <td>
-                                                        {item.lastName}
-                                                    </td>
-                                                    <td>
-                                                        {item.managerName}
-                                                    </td>
-                                                </tr>
-                                            )
-                                        })
-                                    }
-                                </table>
-                            </>
-                    }
+                                ))}
+                                {visibleWorkers.length === 0 && (
+                                    <tr>
+                                        <td className="empty-cell" colSpan="4">
+                                            {workers.length === 0 ? "No workers in this team" : "No workers match this filter"}
+                                        </td>
+                                    </tr>
+                                )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
                 </>
-            }
-        </div>
-    )
+            )}
+        </main>
+    );
 }
 
 export default TeamDetails;

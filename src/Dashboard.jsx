@@ -52,6 +52,14 @@ function Dashboard() {
             setWorkers([]);
         })
     }
+
+    const handleLogout = () => {
+        // מחיקת העוגייה
+        document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        // ריענון וחזרה למסך הבית
+        window.location.href = "/";
+    };
+
     const visibleWorkers = selectedTeam
         ? workers.filter(worker => worker.teamId == selectedTeam.id)
         : workers;
@@ -65,6 +73,14 @@ function Dashboard() {
                     <p className="eyebrow">Team dashboard</p>
                     <h1>Workers Management</h1>
                 </div>
+
+                <button
+                    className="secondary-button"
+                    onClick={handleLogout}
+                    style={{ borderColor: '#ff4d4d', color: '#ff4d4d' }} // קצת צבע אדום שירגיש כמו התנתקות
+                >
+                    Logout
+                </button>
             </section>
 
             <section className="panel">

@@ -27,6 +27,7 @@ function Dashboard() {
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [currentManagerToken, setCurrentManagerToken] = useState("");
     const navigate = useNavigate();
+    const [uri, setUri] = useState("");
 
     useEffect(() => {
         //TODO: from the server I will send an ArrayList of the teams that the manager workers in
@@ -39,6 +40,12 @@ function Dashboard() {
 
         getTeammates();
 
+    }, []);
+
+    useEffect(() => {
+        axios.get(BACKEND_URL + "/get-authenticator-uri").then(response => {
+            setUri(response.data.uri);
+        })
     }, []);
 
     const getTeammates = () => {
@@ -67,7 +74,16 @@ function Dashboard() {
     return (
 
         <main className="app-shell">
-
+            {
+                uri &&
+                <>
+                    <div style={{
+                        padding: "30px"
+                    }}>
+                        <img src={"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(uri)}/>
+                    </div>
+                </>
+            }
             <section className="page-header">
                 <div>
                     <p className="eyebrow">Team dashboard</p>

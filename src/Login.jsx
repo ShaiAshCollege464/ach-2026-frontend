@@ -5,7 +5,7 @@ import axios from "axios";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.BACKEND_URL || "http://localhost:8085/";
 
-function Login() {
+function Login({onLoginSuccess}) {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [ErrorMessage, setErrorMessage] = useState("");
@@ -29,12 +29,12 @@ function Login() {
                                     const loginData = `Login?username=${username}&password=${password}`;
                                     axios.defaults.withCredentials = true;
                                     const resultLogin = await axios.get(BACKEND_URL + loginData).then(response => {
-                                            debugger
                                             if (response.data.success === true) {
                                                 setUsername("");
                                                 setPassword("");
                                                 setErrorMessage("Login good");
-                                                location.reload()
+
+                                                onLoginSuccess();
                                             } else {
                                                 setErrorMessage("Login failed");
                                             }

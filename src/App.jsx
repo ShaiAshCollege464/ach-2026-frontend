@@ -24,7 +24,7 @@ function App() {
                         signedIn ?
                             <Route path="/" element={<Dashboard/>}/>
                             :
-                            <Route path="/" element={<Login/>}/>
+                            <Route path="/" element={<Login onLoginSuccess={() => setSignedIn(true)}/>}/>
                     }
                     <Route path={"team/:id"} element={<TeamDetails/>}/>
                     <Route path={"temp"} element={<GetQrPage/>}/>

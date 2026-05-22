@@ -13,7 +13,7 @@ function GetQrPage () {
                 setUsername(event.target.value)
             }) }/>
             <button onClick={() => {
-                axios.get(BACKEND_URL + "/get-authenticator-uri?username=" + username).then(response => {
+                axios.get(BACKEND_URL + "get-authenticator-uri?username=" + username).then(response => {
                     setUri(response.data.uri);
                 })
             }}>

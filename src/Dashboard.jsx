@@ -28,7 +28,22 @@ function Dashboard() {
     const [currentManagerToken, setCurrentManagerToken] = useState("");
     const navigate = useNavigate();
     const [uri, setUri] = useState("");
-
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [taskTitle, setTaskTitle] = useState("");
+    const [taskDetails, setTaskDetails] = useState("");
+    const [taskStartDate, setTaskStartDate] = useState("");
+    const [taskHoursEstimate, setTaskHoursEstimate] = useState("");
+    const getTeammates = () => {
+        axios.defaults.withCredentials = true;
+        axios.get(BACKEND_URL + "get-workers-by-manager").then(response => {
+            console.log(response.data)
+            setWorkers(normalizeWorkers(response.data));
+            setCurrentManagerToken("");
+        }).catch(error => {
+            console.error("Failed to load workers", error);
+            setWorkers([]);
+        })
+    }
     useEffect(() => {
         //TODO: from the server I will send an ArrayList of the teams that the manager workers in
         axios.get(BACKEND_URL + "get-teams").then(response => {
@@ -48,18 +63,28 @@ function Dashboard() {
         })
     }, []);
 
-    const getTeammates = () => {
-        axios.defaults.withCredentials = true;
-        axios.get(BACKEND_URL + "get-workers-by-manager").then(response => {
-            console.log(response.data)
-            setWorkers(normalizeWorkers(response.data));
-            setCurrentManagerToken("");
-        }).catch(error => {
-            console.error("Failed to load workers", error);
-            setWorkers([]);
-        })
-    }
 
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setTaskTitle("");
+        setTaskDetails("");
+        setTaskStartDate("");
+        setTaskHoursEstimate("");
+    };
+    const handleSaveTask = () => {
+
+        axios.post(BACKEND_URL + "add-task?title="+taskTitle+"&description="+taskDetails+"&start="+taskStartDate+"&duration="+taskHoursEstimate)
+            .then(response => {
+                alert("Saved successfully!");
+                handleCloseModal();
+                // במידת הצורך, רענן כאן נתונים (למשל קריאה מחדש לשרת)
+            })
+            .catch(error => {
+                console.error("Failed to save", error);
+                // זמנית נסגור בכל זאת כדי שתוכל לראות שזה עובד גם אם השרת לא מגיב עדיין
+                handleCloseModal();
+            });
+    };
     const handleLogout = () => {
         // מחיקת העוגייה
         document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -99,6 +124,78 @@ function Dashboard() {
                 </button>
             </section>
 
+            {/* כפתור פתיחת הפופאפ שמילאנו בלוגיקה */}
+            <button className="action-button" onClick={() => setIsModalOpen(true)} style={{ marginBottom: "20px", padding: "10px 20px" }}>
+                ➕ Add Task / Team
+            </button>
+
+            {/* --- קוד ה-POPUP (MODAL) --- */}
+            {isModalOpen && (
+                <div className="modal-overlay" style={{
+                    position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+                    backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex",
+                    justifyContent: "center", alignItems: "center", zIndex: 1000
+                }}>
+                    <div className="modal-content" style={{
+                        background: "white", padding: "30px", borderRadius: "12px",
+                        width: "400px", boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+                        display: "flex", flexDirection: "column", gap: "15px", color: "#333"
+                    }}>
+                        <h3 style={{ margin: "0 0 10px 0", borderBottom: "1px solid #eee", paddingBottom: "10px" }}>Add New Task</h3>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                            <label style={{ fontWeight: "bold", fontSize: "14px" }}>Title (כותרת):</label>
+                            <input
+                                type="text"
+                                value={taskTitle}
+                                onChange={(e) => setTaskTitle(e.target.value)}
+                                placeholder="Enter title"
+                                style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }}
+                            />
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                            <label style={{ fontWeight: "bold", fontSize: "14px" }}>Details (פרטים):</label>
+                            <textarea
+                                value={taskDetails}
+                                onChange={(e) => setTaskDetails(e.target.value)}
+                                placeholder="Enter task details"
+                                style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc", minHeight: "60px", resize: "vertical" }}
+                            />
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                            <label style={{ fontWeight: "bold", fontSize: "14px" }}>Start Date (מועד התחלה):</label>
+                            <input
+                                type="datetime-local"
+                                value={taskStartDate}
+                                onChange={(e) => setTaskStartDate(e.target.value)}
+                                style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }}
+                            />
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                            <label style={{ fontWeight: "bold", fontSize: "14px" }}>Hours Estimate (הערכת שעות):</label>
+                            <input
+                                type="number"
+                                value={taskHoursEstimate}
+                                onChange={(e) => setTaskHoursEstimate(e.target.value)}
+                                placeholder="e.g. 5"
+                                style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }}
+                            />
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "15px" }}>
+                            <button className="secondary-button" onClick={handleCloseModal} style={{ padding: "8px 15px" }}>
+                                Cancel (ביטול)
+                            </button>
+                            <button className="action-button" onClick={handleSaveTask} style={{ padding: "8px 15px" }} disabled={!taskTitle}>
+                                Save (שמירה)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             <section className="panel">
                 <div className="section-header">
                     <div>

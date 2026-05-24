@@ -115,13 +115,6 @@ function Dashboard() {
                     <h1>Workers Management</h1>
                 </div>
 
-                <button
-                    className="secondary-button"
-                    onClick={handleLogout}
-                    style={{ borderColor: '#ff4d4d', color: '#ff4d4d' }} // קצת צבע אדום שירגיש כמו התנתקות
-                >
-                    Logout
-                </button>
             </section>
 
             {/* כפתור פתיחת הפופאפ שמילאנו בלוגיקה */}

@@ -33,6 +33,11 @@ function Dashboard() {
     const [taskDetails, setTaskDetails] = useState("");
     const [taskStartDate, setTaskStartDate] = useState("");
     const [taskHoursEstimate, setTaskHoursEstimate] = useState("");
+
+    const [workerFirstName, setWorkerFirstName] = useState("");
+const [workerLastName, setWorkerLastName] = useState("");
+
+
     const getTeammates = () => {
         axios.defaults.withCredentials = true;
         axios.get(BACKEND_URL + "get-workers-by-manager").then(response => {
@@ -85,6 +90,31 @@ function Dashboard() {
                 handleCloseModal();
             });
     };
+
+    const handleAddWorker = () => {
+
+    axios.post(
+        BACKEND_URL +
+        "add-worker?firstName=" + workerFirstName +
+        "&lastName=" + workerLastName +
+        "&workerId=123456" +
+        "&role=QA" +
+        "&teamId=1",
+        {},
+        {
+            withCredentials: true
+        }
+    )
+        .then(response => {
+            alert("Worker added successfully!");
+            getTeammates();
+        })
+        .catch(error => {
+            console.error("Failed to add worker", error);
+        });
+};
+
+
     const handleLogout = () => {
         // מחיקת העוגייה
         document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -144,6 +174,28 @@ function Dashboard() {
                         <h3 style={{ margin: "0 0 10px 0", borderBottom: "1px solid #eee", paddingBottom: "10px" }}>Add New Task</h3>
 
                         <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+    <label>Worker First Name:</label>
+
+    <input
+        type="text"
+        value={workerFirstName}
+        onChange={(e) => setWorkerFirstName(e.target.value)}
+    />
+</div>
+
+<div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+    <label>Worker Last Name:</label>
+
+    <input
+        type="text"
+        value={workerLastName}
+        onChange={(e) => setWorkerLastName(e.target.value)}
+    />
+</div>
+
+
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                             <label style={{ fontWeight: "bold", fontSize: "14px" }}>Title (כותרת):</label>
                             <input
                                 type="text"
@@ -189,6 +241,15 @@ function Dashboard() {
                             <button className="secondary-button" onClick={handleCloseModal} style={{ padding: "8px 15px" }}>
                                 Cancel (ביטול)
                             </button>
+
+                            <button
+    className="action-button"
+    onClick={handleAddWorker}
+>
+    Add Worker
+</button>
+
+
                             <button className="action-button" onClick={handleSaveTask} style={{ padding: "8px 15px" }} disabled={!taskTitle}>
                                 Save (שמירה)
                             </button>

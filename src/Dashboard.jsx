@@ -33,8 +33,11 @@ function Dashboard() {
     const [taskDetails, setTaskDetails] = useState("");
     const [taskStartDate, setTaskStartDate] = useState("");
     const [taskHoursEstimate, setTaskHoursEstimate] = useState("");
+
     const [workerFirstName, setWorkerFirstName] = useState("");
 const [workerLastName, setWorkerLastName] = useState("");
+
+
     const getTeammates = () => {
         axios.defaults.withCredentials = true;
         axios.get(BACKEND_URL + "get-workers-by-manager").then(response => {
@@ -87,6 +90,7 @@ const [workerLastName, setWorkerLastName] = useState("");
                 handleCloseModal();
             });
     };
+
     const handleAddWorker = () => {
 
     axios.post(
@@ -109,6 +113,8 @@ const [workerLastName, setWorkerLastName] = useState("");
             console.error("Failed to add worker", error);
         });
 };
+
+
     const handleLogout = () => {
         // מחיקת העוגייה
         document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -166,6 +172,7 @@ const [workerLastName, setWorkerLastName] = useState("");
                         display: "flex", flexDirection: "column", gap: "15px", color: "#333"
                     }}>
                         <h3 style={{ margin: "0 0 10px 0", borderBottom: "1px solid #eee", paddingBottom: "10px" }}>Add New Task</h3>
+
                         <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
     <label>Worker First Name:</label>
 
@@ -185,6 +192,8 @@ const [workerLastName, setWorkerLastName] = useState("");
         onChange={(e) => setWorkerLastName(e.target.value)}
     />
 </div>
+
+
 
                         <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                             <label style={{ fontWeight: "bold", fontSize: "14px" }}>Title (כותרת):</label>
@@ -232,12 +241,15 @@ const [workerLastName, setWorkerLastName] = useState("");
                             <button className="secondary-button" onClick={handleCloseModal} style={{ padding: "8px 15px" }}>
                                 Cancel (ביטול)
                             </button>
+
                             <button
     className="action-button"
     onClick={handleAddWorker}
 >
     Add Worker
 </button>
+
+
                             <button className="action-button" onClick={handleSaveTask} style={{ padding: "8px 15px" }} disabled={!taskTitle}>
                                 Save (שמירה)
                             </button>

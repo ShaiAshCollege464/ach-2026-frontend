@@ -1,0 +1,114 @@
+.mode-switch {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+    background-color: #f0f4f8;
+
+}
+.login-box{
+    background: white;
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.mode-switch button:disabled {
+    background: #5a8dee;
+    color: white;
+    cursor: default;
+}
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.exacute-button{
+    gap: 12px;
+    display: flex;
+    flex-direction: column;
+
+}
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #5a8dee;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+.execute-btn button:disabled {
+    background-color: #cbd5e0;
+    cursor: not-allowed;
+}
+.execute-btn button:hover:not(:disabled) {
+    background-color: #4876d6;
+}
+input {
+    width: 100%;
+    padding: 12px;
+    box-sizing: border-box;
+    border: 1px solid #e0e6ed;
+    border-radius: 8px;
+    background-color: #f9fbff;
+    outline: none;
+    transition: border 0.3s;
+}
+.mode-switch button {
+    background: none;
+    border: 1px solid #d1e3f8;
+    color: #5a8dee;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+}
+.Error{
+    color: red;
+}
+
+.card {
+    padding: 2em;
+}
+
+.read-the-docs {
+    color: #888;
+}
+.header-container {
+    width: 100%;
+    background: #ffffff;
+    padding: 15px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e1e4e8;
+    box-sizing: border-box;
+}
+
+.header-title {
+    font-size: 24px;
+    font-weight: 800;
+    color: #1c1e21;
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+.header-title span {
+    color: #0095f6; /* הצבע הכחול של המותג */
+}

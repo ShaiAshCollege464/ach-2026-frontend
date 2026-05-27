@@ -16,6 +16,17 @@ function normalizeWorker(worker) {
     };
 }
 
+function normalizeTask(task) {
+    const allTaskEntity = task.allTaskEntity;
+    return {
+        ...task,
+    };
+}
+
+function tasks(allTasks) {
+    return Array.isArray(allTasks) ? allTasks.map(normalizeTask) : [];
+}
+
 function normalizeWorkers(workers) {
     return Array.isArray(workers) ? workers.map(normalizeWorker) : [];
 }
@@ -36,6 +47,7 @@ function Dashboard() {
     const [taskTitle, setTaskTitle] = useState("");
     const [taskDetails, setTaskDetails] = useState("");
     const [taskStartDate, setTaskStartDate] = useState("");
+    const [allTasks, setAllTasks] = useState([]);
     const [taskHoursEstimate, setTaskHoursEstimate] = useState("");
     const getTeammates = () => {
         axios.defaults.withCredentials = true;
@@ -48,6 +60,13 @@ function Dashboard() {
             setWorkers([]);
         })
     }
+
+    const getTasks = () => {
+        axios.defaults.withCredentials = true;
+
+        axios.get(BACKEND_URL + "get-all-tasks")
+    }
+
     useEffect(() => {
         //TODO: from the server I will send an ArrayList of the teams that the manager workers in
         axios.get(BACKEND_URL + "get-teams").then(response => {
@@ -74,6 +93,15 @@ function Dashboard() {
         })
 
     }, []);
+
+useEffect(() => {
+    axios.get(BACKEND_URL + "get-tasks")
+        .then(response => {
+            setAllTasks(Array.isArray(response.data) ? response.data : []);
+        })
+        .catch(() => setAllTasks([]));
+}, []);
+
 
 
     const handleCloseModal = () => {
@@ -130,7 +158,7 @@ function Dashboard() {
                 <button
                     className="secondary-button"
                     onClick={handleLogout}
-                    style={{ borderColor: '#ff4d4d', color: '#ff4d4d' }}
+                    style={{ borderColor: '#ff4d4d', color: '#ff4d4d' }}>
                     Logout
                 </button>
             </section>
@@ -370,6 +398,92 @@ function Dashboard() {
                     </div>
                 </section>
             )}
+
+            {Array.isArray(allTasks) && allTasks.length > 0 && (
+                <section className="panel">
+                    <div className="section-header">
+                        <div>
+                            <h2>Tasks List</h2>
+                            <p>{allTasks.length} tasks available</p>
+                        </div>
+                    </div>
+
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "20px",
+                            marginTop: "20px"
+                        }}
+                    >
+                        {allTasks.map(task => (
+                            <div
+                                key={task.id}
+                                style={{
+                                    border: "3px solid #4a90e2",
+                                    borderRadius: "12px",
+                                    padding: "20px",
+                                    backgroundColor: "#f9f9f9",
+                                    boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
+                                }}
+                            >
+                                <h3 style={{ marginBottom: "10px", color: "#222" }}>
+                                    {task.title}
+                                </h3>
+
+                                <p style={{ marginBottom: "15px", color: "#555" }}>
+                                    {task.description}
+                                </p>
+
+                                {task.isCompleted && (
+                                    <div
+                                        style={{
+                                            marginBottom: "15px",
+                                            color: "green",
+                                            fontWeight: "bold",
+                                            fontSize: "18px"
+                                        }}
+                                    >
+                                        ✅ Completed Task
+                                    </div>
+                                )}
+
+                                <button
+                                    className="action-button"
+                                    onClick={() => {
+                                        axios.post(
+                                            BACKEND_URL +
+                                            "task-completed?taskId=" +
+                                            task.id
+                                        ).then(() => {
+
+                                            setAllTasks(prev =>
+                                                prev.map(t =>
+                                                    t.id === task.id
+                                                        ? {
+                                                            ...t,
+                                                            isCompleted: !t.isCompleted
+                                                        }
+                                                        : t
+                                                )
+                                            );
+
+                                        }).catch(error => {
+                                            console.error(
+                                                "Failed to complete task",
+                                                error
+                                            );
+                                        });
+                                    }}
+                                >
+                                    ✅ Task Completed?
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
         </main>
     )
 }

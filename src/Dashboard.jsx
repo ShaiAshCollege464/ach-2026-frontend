@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react'
 import './App.css'
 import axios from "axios";
 import {useNavigate} from "react-router-dom";
+import TransferWorkerModal from "./TransferWorkerModal.jsx";
 
 
 export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.BACKEND_URL || "http://localhost:8085/";
@@ -26,6 +27,9 @@ function Dashboard() {
     const [teams, setTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [currentManagerToken, setCurrentManagerToken] = useState("");
+    const [transferWorker, setTransferWorker] = useState(null);
+    const [isManager, setIsManager] = useState(false);
+    const [teamTasks, setTeamTasks] = useState([]);
     const navigate = useNavigate();
     const [uri, setUri] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -54,6 +58,13 @@ function Dashboard() {
         })
 
         getTeammates();
+        axios.get(BACKEND_URL + "is-manager").then(response => {
+            setIsManager(response.data.isManager === true);
+        }).catch(() => setIsManager(false));
+
+        axios.get(BACKEND_URL + "get-team-tasks").then(response => {
+            setTeamTasks(Array.isArray(response.data) ? response.data : []);
+        }).catch(() => setTeamTasks([]));
 
     }, []);
 
@@ -61,6 +72,7 @@ function Dashboard() {
         axios.get(BACKEND_URL + "/get-authenticator-uri").then(response => {
             setUri(response.data.uri);
         })
+
     }, []);
 
 
@@ -118,8 +130,7 @@ function Dashboard() {
                 <button
                     className="secondary-button"
                     onClick={handleLogout}
-                    style={{ borderColor: '#ff4d4d', color: '#ff4d4d' }} // קצת צבע אדום שירגיש כמו התנתקות
-                >
+                    style={{ borderColor: '#ff4d4d', color: '#ff4d4d' }}
                     Logout
                 </button>
             </section>
@@ -199,6 +210,41 @@ function Dashboard() {
             <section className="panel">
                 <div className="section-header">
                     <div>
+                        <h2>My Team Tasks</h2>
+                        <p>{teamTasks.length} tasks in your team</p>
+                    </div>
+                </div>
+                <div className="table-wrap">
+                    <table className="data-table">
+                        <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Details</th>
+                            <th>Start</th>
+                            <th>Hours Estimate</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {teamTasks.map(task => (
+                            <tr key={task.id}>
+                                <td className="name-cell">{task.title}</td>
+                                <td>{task.details}</td>
+                                <td>{task.start ? new Date(task.start).toLocaleString("he-IL") : "—"}</td>
+                                <td><span className="count-pill">{task.hoursEstimation}h</span></td>
+                            </tr>
+                        ))}
+                        {teamTasks.length === 0 && (
+                            <tr>
+                                <td className="empty-cell" colSpan="4">No tasks assigned to your team</td>
+                            </tr>
+                        )}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            {isManager && <section className="panel">
+                <div className="section-header">
+                    <div>
                         <h2>Teams List</h2>
                         <p>{teams.length} teams available</p>
                     </div>
@@ -211,6 +257,7 @@ function Dashboard() {
                             <th>Name</th>
                             <th>Workers Count</th>
                             <th>Show Details</th>
+
                         </tr>
                         </thead>
                         <tbody>
@@ -232,9 +279,9 @@ function Dashboard() {
                         </tbody>
                     </table>
                 </div>
-            </section>
+            </section>}
 
-            <section className="panel">
+            {isManager && <section className="panel">
                 <div className="section-header">
                     <div>
                         <h2>{selectedTeam ? selectedTeam.name + " Workers" : "Worker List"}</h2>
@@ -255,6 +302,7 @@ function Dashboard() {
                             <th>Last Name</th>
                             <th>Team</th>
                             <th>Show Details</th>
+                            <th>Transfer Worker</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -281,19 +329,34 @@ function Dashboard() {
                                         {selectedWorker && selectedWorker.id == item.id ? "Hide Details" : "Show Details"}
                                     </button>
                                 </td>
+                                <td>
+                                    <button
+                                        className="secondary-button"
+                                        onClick={() => setTransferWorker(item)}
+                                        style={{ whiteSpace: "nowrap" }}
+                                    >
+                                        ⇄ Transfer Team
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                         {visibleWorkers.length === 0 && (
                             <tr>
-                                <td className="empty-cell" colSpan="4">No workers to show</td>
+                                <td className="empty-cell" colSpan="5">No workers to show</td>
                             </tr>
                         )}
                         </tbody>
                     </table>
                 </div>
-            </section>
+            </section>}
 
-
+            {transferWorker && (
+                <TransferWorkerModal
+                    worker={transferWorker}
+                    onClose={() => setTransferWorker(null)}
+                    onSuccess={getTeammates}
+                />
+            )}
             {selectedWorker && (
                 <section className="details-panel">
                     <div>

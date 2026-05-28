@@ -28,11 +28,12 @@ function Login({onLoginSuccess}) {
                                     setErrorMessage("");
                                     const loginData = `Login?username=${username}&password=${password}`;
                                     axios.defaults.withCredentials = true;
-                                    const resultLogin = await axios.get(BACKEND_URL + loginData).then(response => {
+                                    await axios.get(BACKEND_URL + loginData).then(response => {
                                             if (response.data.success === true) {
                                                 setUsername("");
                                                 setPassword("");
                                                 setErrorMessage("Login good");
+                                                localStorage.setItem("userRole", response.data.user.role);
 
                                                 onLoginSuccess();
                                             } else {

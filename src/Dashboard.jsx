@@ -1,9 +1,8 @@
-import {useEffect, useState} from 'react'
-import './App.css'
+import { useEffect, useState } from 'react';
+import './App.css';
 import axios from "axios";
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import TransferWorkerModal from "./TransferWorkerModal.jsx";
-
 
 export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.BACKEND_URL || "http://localhost:8085/";
 
@@ -16,67 +15,52 @@ function normalizeWorker(worker) {
     };
 }
 
-function normalizeTask(task) {
-    const allTaskEntity = task.allTaskEntity;
-    return {
-        ...task,
-    };
-}
-
-function tasks(allTasks) {
-    return Array.isArray(allTasks) ? allTasks.map(normalizeTask) : [];
-}
-
 function normalizeWorkers(workers) {
     return Array.isArray(workers) ? workers.map(normalizeWorker) : [];
 }
-
 
 function Dashboard() {
     const [workers, setWorkers] = useState([]);
     const [selectedWorker, setSelectedWorker] = useState(null);
     const [teams, setTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
-    const [currentManagerToken, setCurrentManagerToken] = useState("");
     const [transferWorker, setTransferWorker] = useState(null);
     const [isManager, setIsManager] = useState(false);
     const [teamTasks, setTeamTasks] = useState([]);
     const navigate = useNavigate();
     const [uri, setUri] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const [allTasks, setAllTasks] = useState([]);
     const [taskTitle, setTaskTitle] = useState("");
     const [taskDetails, setTaskDetails] = useState("");
     const [taskStartDate, setTaskStartDate] = useState("");
-    const [allTasks, setAllTasks] = useState([]);
     const [taskHoursEstimate, setTaskHoursEstimate] = useState("");
+
+    const [filterText, setFilterText] = useState("");
+    const [filterStatus, setFilterStatus] = useState("all");
+    const [filterTime, setFilterTime] = useState("all");
+
     const getTeammates = () => {
         axios.defaults.withCredentials = true;
         axios.get(BACKEND_URL + "get-workers-by-manager").then(response => {
-            console.log(response.data)
             setWorkers(normalizeWorkers(response.data));
-            setCurrentManagerToken("");
         }).catch(error => {
             console.error("Failed to load workers", error);
             setWorkers([]);
-        })
-    }
-
-    const getTasks = () => {
-        axios.defaults.withCredentials = true;
-
-        axios.get(BACKEND_URL + "get-all-tasks")
-    }
+        });
+    };
 
     useEffect(() => {
-        //TODO: from the server I will send an ArrayList of the teams that the manager workers in
         axios.get(BACKEND_URL + "get-teams").then(response => {
             setTeams(Array.isArray(response.data) ? response.data : []);
         }).catch(error => {
             console.error("Failed to load teams", error);
             setTeams([]);
-        })
+        });
 
         getTeammates();
+
         axios.get(BACKEND_URL + "is-manager").then(response => {
             setIsManager(response.data.isManager === true);
         }).catch(() => setIsManager(false));
@@ -84,25 +68,22 @@ function Dashboard() {
         axios.get(BACKEND_URL + "get-team-tasks").then(response => {
             setTeamTasks(Array.isArray(response.data) ? response.data : []);
         }).catch(() => setTeamTasks([]));
-
     }, []);
 
     useEffect(() => {
         axios.get(BACKEND_URL + "/get-authenticator-uri").then(response => {
             setUri(response.data.uri);
-        })
-
+        });
     }, []);
 
-useEffect(() => {
-    axios.get(BACKEND_URL + "get-tasks")
-        .then(response => {
-            setAllTasks(Array.isArray(response.data) ? response.data : []);
-        })
-        .catch(() => setAllTasks([]));
-}, []);
-
-
+    useEffect(() => {
+        axios.get(BACKEND_URL + "get-tasks")
+            .then(response => {
+                setAllTasks(Array.isArray(response.data) ? response.data : []);
+                console.log(allTasks);
+            })
+            .catch(() => setAllTasks([]));
+    }, []);
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
@@ -111,64 +92,71 @@ useEffect(() => {
         setTaskStartDate("");
         setTaskHoursEstimate("");
     };
-    const handleSaveTask = () => {
 
+    const handleSaveTask = () => {
         axios.post(BACKEND_URL + "add-task?title="+taskTitle+"&description="+taskDetails+"&start="+taskStartDate+"&duration="+taskHoursEstimate)
-            .then(response => {
+            .then(() => {
                 alert("Saved successfully!");
                 handleCloseModal();
-                // במידת הצורך, רענן כאן נתונים (למשל קריאה מחדש לשרת)
+                axios.get(BACKEND_URL + "get-tasks").then(res => setAllTasks(res.data));
             })
             .catch(error => {
                 console.error("Failed to save", error);
-                // זמנית נסגור בכל זאת כדי שתוכל לראות שזה עובד גם אם השרת לא מגיב עדיין
                 handleCloseModal();
             });
     };
+
     const handleLogout = () => {
-        // מחיקת העוגייה
         document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        // ריענון וחזרה למסך הבית
         window.location.href = "/";
     };
+
+    const filteredTasks = allTasks.filter(task => {
+        const matchesText =
+            task.title?.toLowerCase().includes(filterText.toLowerCase()) ||
+            task.details?.toLowerCase().includes(filterText.toLowerCase());
+
+        let matchesStatus = true;
+        if (filterStatus === "completed") matchesStatus = task.isCompleted === true;
+        if (filterStatus === "pending") matchesStatus = task.isCompleted !== true;
+
+        let matchesTime = true;
+        if (task.start && filterTime !== "all") {
+            const taskDate = new Date(task.start).getTime();
+            const now = Date.now();
+            if (filterTime === "future") matchesTime = taskDate > now;
+            if (filterTime === "past") matchesTime = taskDate <= now;
+        }
+
+        return matchesText && matchesStatus && matchesTime;
+    });
 
     const visibleWorkers = selectedTeam
         ? workers.filter(worker => worker.teamId == selectedTeam.id)
         : workers;
 
     return (
-
         <main className="app-shell">
-            {
-                uri &&
-                <>
-                    <div style={{
-                        padding: "30px"
-                    }}>
-                        <img src={"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(uri)}/>
-                    </div>
-                </>
-            }
+            {uri && (
+                <div style={{ padding: "30px" }}>
+                    <img src={"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(uri)} alt="QR"/>
+                </div>
+            )}
+
             <section className="page-header">
                 <div>
                     <p className="eyebrow">Team dashboard</p>
                     <h1>Workers Management</h1>
                 </div>
-
-                <button
-                    className="secondary-button"
-                    onClick={handleLogout}
-                    style={{ borderColor: '#ff4d4d', color: '#ff4d4d' }}>
+                <button className="secondary-button" onClick={handleLogout} style={{ borderColor: '#ff4d4d', color: '#ff4d4d' }}>
                     Logout
                 </button>
             </section>
 
-            {/* כפתור פתיחת הפופאפ שמילאנו בלוגיקה */}
             <button className="action-button" onClick={() => setIsModalOpen(true)} style={{ marginBottom: "20px", padding: "10px 20px" }}>
-                ➕ Add Task / Team
+                 Add Task / Team
             </button>
 
-            {/* --- קוד ה-POPUP (MODAL) --- */}
             {isModalOpen && (
                 <div className="modal-overlay" style={{
                     position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
@@ -181,65 +169,78 @@ useEffect(() => {
                         display: "flex", flexDirection: "column", gap: "15px", color: "#333"
                     }}>
                         <h3 style={{ margin: "0 0 10px 0", borderBottom: "1px solid #eee", paddingBottom: "10px" }}>Add New Task</h3>
-
                         <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                             <label style={{ fontWeight: "bold", fontSize: "14px" }}>Title (כותרת):</label>
-                            <input
-                                type="text"
-                                value={taskTitle}
-                                onChange={(e) => setTaskTitle(e.target.value)}
-                                placeholder="Enter title"
-                                style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }}
-                            />
+                            <input type="text" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} placeholder="Enter title" style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }} />
                         </div>
-
                         <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                             <label style={{ fontWeight: "bold", fontSize: "14px" }}>Details (פרטים):</label>
-                            <textarea
-                                value={taskDetails}
-                                onChange={(e) => setTaskDetails(e.target.value)}
-                                placeholder="Enter task details"
-                                style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc", minHeight: "60px", resize: "vertical" }}
-                            />
+                            <textarea value={taskDetails} onChange={(e) => setTaskDetails(e.target.value)} placeholder="Enter task details" style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc", minHeight: "60px", resize: "vertical" }} />
                         </div>
-
                         <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                             <label style={{ fontWeight: "bold", fontSize: "14px" }}>Start Date (מועד התחלה):</label>
-                            <input
-                                type="datetime-local"
-                                value={taskStartDate}
-                                onChange={(e) => setTaskStartDate(e.target.value)}
-                                style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }}
-                            />
+                            <input type="datetime-local" value={taskStartDate} onChange={(e) => setTaskStartDate(e.target.value)} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }} />
                         </div>
-
                         <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                             <label style={{ fontWeight: "bold", fontSize: "14px" }}>Hours Estimate (הערכת שעות):</label>
-                            <input
-                                type="number"
-                                value={taskHoursEstimate}
-                                onChange={(e) => setTaskHoursEstimate(e.target.value)}
-                                placeholder="e.g. 5"
-                                style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }}
-                            />
+                            <input type="number" value={taskHoursEstimate} onChange={(e) => setTaskHoursEstimate(e.target.value)} placeholder="e.g. 5" style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }} />
                         </div>
-
                         <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "15px" }}>
-                            <button className="secondary-button" onClick={handleCloseModal} style={{ padding: "8px 15px" }}>
-                                Cancel (ביטול)
-                            </button>
-                            <button className="action-button" onClick={handleSaveTask} style={{ padding: "8px 15px" }} disabled={!taskTitle}>
-                                Save (שמירה)
-                            </button>
+                            <button className="secondary-button" onClick={handleCloseModal} style={{ padding: "8px 15px" }}>Cancel</button>
+                            <button className="action-button" onClick={handleSaveTask} style={{ padding: "8px 15px" }} disabled={!taskTitle}>Save</button>
                         </div>
                     </div>
                 </div>
             )}
+
+            <section className="panel" style={{ marginBottom: "25px", padding: "20px" }}>
+                <h3 style={{ margin: "0 0 15px 0" }}> Filters</h3>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "15px" }}>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "5px", flex: "1 1 200px" }}>
+                        <label style={{ fontSize: "13px", fontWeight: "bold" }}>Free Search:</label>
+                        <input
+                            type="text"
+                            placeholder="Search by title or details..."
+                            value={filterText}
+                            onChange={(e) => setFilterText(e.target.value)}
+                            style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }}
+                        />
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "5px", width: "150px" }}>
+                        <label style={{ fontSize: "13px", fontWeight: "bold" }}>Status:</label>
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc", backgroundColor: "white" }}
+                        >
+                            <option value="all">All</option>
+                            <option value="completed">Completed</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "5px", width: "150px" }}>
+                        <label style={{ fontSize: "13px", fontWeight: "bold" }}>Time:</label>
+                        <select
+                            value={filterTime}
+                            onChange={(e) => setFilterTime(e.target.value)}
+                            style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc", backgroundColor: "white" }}
+                        >
+                            <option value="all">All Times</option>
+                            <option value="future">Future Tasks</option>
+                            <option value="past">Past Tasks</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
             <section className="panel">
                 <div className="section-header">
                     <div>
-                        <h2>My Team Tasks</h2>
-                        <p>{teamTasks.length} tasks in your team</p>
+                        <h2>Total Tasks</h2>
+                        <p>Showing {filteredTasks.length} out of {allTasks.length} tasks</p>
                     </div>
                 </div>
                 <div className="table-wrap">
@@ -250,242 +251,146 @@ useEffect(() => {
                             <th>Details</th>
                             <th>Start</th>
                             <th>Hours Estimate</th>
+                            <th>Status</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {teamTasks.map(task => (
+                        {filteredTasks.map(task => (
                             <tr key={task.id}>
-                                <td className="name-cell">{task.title}</td>
-                                <td>{task.details}</td>
+                                <td className="name-cell">
+                                    {task.title}
+                                </td>
+                                <td>{task.details || task.description}</td>
                                 <td>{task.start ? new Date(task.start).toLocaleString("he-IL") : "—"}</td>
                                 <td><span className="count-pill">{task.hoursEstimation}h</span></td>
+                                <td>
+                                    {task.completed ? "Completed" : " Pending"}
+                                </td>
+
                             </tr>
                         ))}
-                        {teamTasks.length === 0 && (
+                        {filteredTasks.length === 0 && (
                             <tr>
-                                <td className="empty-cell" colSpan="4">No tasks assigned to your team</td>
+                                <td className="empty-cell" colSpan="4">No tasks match your filters</td>
                             </tr>
                         )}
                         </tbody>
                     </table>
                 </div>
             </section>
-            {isManager && <section className="panel">
-                <div className="section-header">
-                    <div>
+
+            {isManager && (
+                <section className="panel">
+                    <div className="section-header">
                         <h2>Teams List</h2>
                         <p>{teams.length} teams available</p>
                     </div>
-                </div>
-
-                <div className="table-wrap">
-                    <table className="data-table">
-                        <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Workers Count</th>
-                            <th>Show Details</th>
-
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {teams.map(item => (
-                            <tr key={item.id} className={selectedTeam && selectedTeam.id == item.id ? "selected-row" : ""}>
-                                <td className="name-cell">{item.name}</td>
-                                <td>
-                                    <span className="count-pill">{item.workersCount}</span>
-                                </td>
-                                <td>
-                                    <button className="action-button" onClick={() => {
-                                        navigate("/team/" + item.id)
-                                    }}>
-                                        To details page
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                </div>
-            </section>}
-
-            {isManager && <section className="panel">
-                <div className="section-header">
-                    <div>
-                        <h2>{selectedTeam ? selectedTeam.name + " Workers" : "Worker List"}</h2>
-                        <p>{visibleWorkers.length} workers shown</p>
-                    </div>
-                    {selectedTeam && (
-                        <button className="secondary-button" onClick={() => setSelectedTeam(null)}>
-                            Clear Filter
-                        </button>
-                    )}
-                </div>
-
-                <div className="table-wrap">
-                    <table className="data-table">
-                        <thead>
-                        <tr>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Team</th>
-                            <th>Show Details</th>
-                            <th>Transfer Worker</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {visibleWorkers.map(item => (
-                            <tr key={item.id} className={selectedWorker && selectedWorker.id == item.id ? "selected-row" : ""}>
-                                <td className="name-cell">{item.firstName}</td>
-                                <td>{item.lastName}</td>
-                                <td>{item.teamName}</td>
-                                <td>
-                                    <button className="action-button" onClick={() => {
-                                        if (selectedWorker && selectedWorker.id == item.id) {
-                                            setSelectedWorker(null)
-                                        } else {
-                                            axios.get(BACKEND_URL + "get-worker-details?workerId=" + item.id)
-                                                .then(response => {
-                                                    const workerDetails = normalizeWorker(response.data);
-                                                    setSelectedWorker(workerDetails);
-                                                }).catch(error => {
-                                                console.error("Failed to load worker details", error);
-                                                setSelectedWorker(item);
-                                            })
-                                        }
-                                    }}>
-                                        {selectedWorker && selectedWorker.id == item.id ? "Hide Details" : "Show Details"}
-                                    </button>
-                                </td>
-                                <td>
-                                    <button
-                                        className="secondary-button"
-                                        onClick={() => setTransferWorker(item)}
-                                        style={{ whiteSpace: "nowrap" }}
-                                    >
-                                        ⇄ Transfer Team
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                        {visibleWorkers.length === 0 && (
-                            <tr>
-                                <td className="empty-cell" colSpan="5">No workers to show</td>
-                            </tr>
-                        )}
-                        </tbody>
-                    </table>
-                </div>
-            </section>}
-
-            {transferWorker && (
-                <TransferWorkerModal
-                    worker={transferWorker}
-                    onClose={() => setTransferWorker(null)}
-                    onSuccess={getTeammates}
-                />
-            )}
-            {selectedWorker && (
-                <section className="details-panel">
-                    <div>
-                        <p className="eyebrow">Worker Details</p>
-                        <h2>{selectedWorker.firstName} {selectedWorker.lastName}</h2>
-                    </div>
-
-                    <div className="details-field">
-                        <span>Team</span>
-                        <strong>{selectedWorker.teamName || "No team"}</strong>
+                    <div className="table-wrap">
+                        <table className="data-table">
+                            <thead><tr><th>Name</th><th>Workers Count</th><th>Show Details</th></tr></thead>
+                            <tbody>
+                            {teams.map(item => (
+                                <tr key={item.id}>
+                                    <td className="name-cell">{item.name}</td>
+                                    <td><span className="count-pill">{item.workersCount}</span></td>
+                                    <td><button className="action-button" onClick={() => navigate("/team/" + item.id)}>To details page</button></td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
                     </div>
                 </section>
             )}
 
-            {Array.isArray(allTasks) && allTasks.length > 0 && (
+            {isManager && (
+                <section className="panel">
+                    <div className="section-header">
+                        <h2>{selectedTeam ? selectedTeam.name + " Workers" : "Worker List"}</h2>
+                    </div>
+                    <div className="table-wrap">
+                        <table className="data-table">
+                            <thead><tr><th>First Name</th><th>Last Name</th><th>Team</th><th>Show Details</th><th>Transfer</th></tr></thead>
+                            <tbody>
+                            {visibleWorkers.map(item => (
+                                <tr key={item.id}>
+                                    <td className="name-cell">{item.firstName}</td>
+                                    <td>{item.lastName}</td>
+                                    <td>{item.teamName}</td>
+                                    <td>
+                                        <button className="action-button" onClick={() => {
+                                            if (selectedWorker?.id == item.id) setSelectedWorker(null);
+                                            else axios.get(BACKEND_URL + "get-worker-details?workerId=" + item.id).then(res => setSelectedWorker(normalizeWorker(res.data)));
+                                        }}>{selectedWorker?.id == item.id ? "Hide Details" : "Show Details"}</button>
+                                    </td>
+                                    <td><button className="secondary-button" onClick={() => setTransferWorker(item)}>⇄ Transfer Team</button></td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            )}
+
+            {transferWorker && <TransferWorkerModal worker={transferWorker} onClose={() => setTransferWorker(null)} onSuccess={getTeammates} />}
+            {selectedWorker && (
+                <section className="details-panel">
+                    <h2>{selectedWorker.firstName} {selectedWorker.lastName}</h2>
+                    <div className="details-field"><span>Team</span><strong>{selectedWorker.teamName || "No team"}</strong></div>
+                </section>
+            )}
+
+            {Array.isArray(filteredTasks) && filteredTasks.length > 0 && (
                 <section className="panel">
                     <div className="section-header">
                         <div>
-                            <h2>Tasks List</h2>
-                            <p>{allTasks.length} tasks available</p>
+                            <h2>Tasks List (Detailed View)</h2>
+                            <p>{filteredTasks.length} filtered tasks displayed</p>
                         </div>
                     </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "20px", marginTop: "20px" }}>
+                        {filteredTasks.map(task => (
+                            <div key={task.id} style={{
+                                border: task.isCompleted ? "3px solid #2ecc71" : "3px solid #4a90e2",
+                                borderRadius: "12px", padding: "20px", backgroundColor: "#f9f9f9",
+                                boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
+                            }}>
+                                <h3 style={{ marginBottom: "10px", color: "#222" }}>{task.title}</h3>
+                                <p style={{ marginBottom: "15px", color: "#555" }}>{task.details || task.description}</p>
 
-                    <div
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "20px",
-                            marginTop: "20px"
-                        }}
-                    >
-                        {allTasks.map(task => (
-                            <div
-                                key={task.id}
-                                style={{
-                                    border: "3px solid #4a90e2",
-                                    borderRadius: "12px",
-                                    padding: "20px",
-                                    backgroundColor: "#f9f9f9",
-                                    boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
-                                }}
-                            >
-                                <h3 style={{ marginBottom: "10px", color: "#222" }}>
-                                    {task.title}
-                                </h3>
+                                <div style={{ fontSize: "13px", color: "#777", marginBottom: "15px" }}>
+                                     <strong>Start:</strong> {task.start ? new Date(task.start).toLocaleString("he-IL") : "—"}
+                                </div>
 
-                                <p style={{ marginBottom: "15px", color: "#555" }}>
-                                    {task.description}
-                                </p>
-
-                                {task.isCompleted && (
-                                    <div
-                                        style={{
-                                            marginBottom: "15px",
-                                            color: "green",
-                                            fontWeight: "bold",
-                                            fontSize: "18px"
-                                        }}
-                                    >
-                                        ✅ Completed Task
+                                {task.isCompleted ? (
+                                    <div style={{ marginBottom: "15px", color: "green", fontWeight: "bold", fontSize: "18px" }}>
+                                         Completed Task
+                                    </div>
+                                ) : (
+                                    <div style={{ marginBottom: "15px", color: "#e67e22", fontWeight: "bold", fontSize: "16px" }}>
+                                         In Progress / Pending
                                     </div>
                                 )}
 
                                 <button
                                     className="action-button"
                                     onClick={() => {
-                                        axios.post(
-                                            BACKEND_URL +
-                                            "task-completed?taskId=" +
-                                            task.id
-                                        ).then(() => {
-
+                                        axios.post(BACKEND_URL + "task-completed?taskId=" + task.id).then(() => {
                                             setAllTasks(prev =>
-                                                prev.map(t =>
-                                                    t.id === task.id
-                                                        ? {
-                                                            ...t,
-                                                            isCompleted: !t.isCompleted
-                                                        }
-                                                        : t
-                                                )
+                                                prev.map(t => t.id === task.id ? { ...t, isCompleted: !t.isCompleted } : t)
                                             );
-
-                                        }).catch(error => {
-                                            console.error(
-                                                "Failed to complete task",
-                                                error
-                                            );
-                                        });
+                                        }).catch(error => console.error("Failed to update task", error));
                                     }}
+                                    style={{ backgroundColor: task.isCompleted ? "#e74c3c" : "#2ecc71" }}
                                 >
-                                    ✅ Task Completed?
+                                    {task.isCompleted ? " Mark as Pending" : " Mark as Completed"}
                                 </button>
                             </div>
                         ))}
                     </div>
                 </section>
             )}
-
         </main>
-    )
+    );
 }
 
-export default Dashboard
+export default Dashboard;

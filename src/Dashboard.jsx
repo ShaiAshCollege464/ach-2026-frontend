@@ -36,6 +36,8 @@ function Dashboard() {
     const [taskDetails, setTaskDetails] = useState("");
     const [taskStartDate, setTaskStartDate] = useState("");
     const [taskHoursEstimate, setTaskHoursEstimate] = useState("");
+    const [taskTeamId, setTaskTeamId] = useState("");
+    const [taskNotice, setTaskNotice] = useState(null);
 
     const [filterText, setFilterText] = useState("");
     const [filterStatus, setFilterStatus] = useState("all");
@@ -91,18 +93,43 @@ function Dashboard() {
         setTaskDetails("");
         setTaskStartDate("");
         setTaskHoursEstimate("");
+        setTaskTeamId("");
     };
 
+    const missingTaskFields = [
+        !taskTitle.trim() ? "title" : null,
+        !taskDetails.trim() ? "details" : null,
+        !taskTeamId ? "team" : null,
+        !taskStartDate ? "start date and time" : null,
+        !taskHoursEstimate ? "hours estimate" : null,
+    ].filter(Boolean);
+    const taskValidationMessage = missingTaskFields.length > 0
+        ? "Please fill: " + missingTaskFields.join(", ")
+        : "";
+
     const handleSaveTask = () => {
-        axios.post(BACKEND_URL + "add-task?title="+taskTitle+"&description="+taskDetails+"&start="+taskStartDate+"&duration="+taskHoursEstimate)
+        if (missingTaskFields.length > 0) return;
+
+        const params = new URLSearchParams({
+            title: taskTitle,
+            description: taskDetails,
+            start: taskStartDate,
+            duration: taskHoursEstimate,
+            teamId: taskTeamId,
+        });
+
+        axios.post(BACKEND_URL + "add-task?" + params.toString())
             .then(() => {
-                alert("Saved successfully!");
                 handleCloseModal();
+                setTaskNotice({ type: "success", message: "Task saved successfully" });
+                window.setTimeout(() => setTaskNotice(null), 2600);
                 axios.get(BACKEND_URL + "get-tasks").then(res => setAllTasks(res.data));
             })
             .catch(error => {
                 console.error("Failed to save", error);
                 handleCloseModal();
+                setTaskNotice({ type: "error", message: "Task could not be saved" });
+                window.setTimeout(() => setTaskNotice(null), 3200);
             });
     };
 
@@ -137,6 +164,13 @@ function Dashboard() {
 
     return (
         <main className="app-shell">
+            {taskNotice && (
+                <div className={"task-toast " + taskNotice.type} role="status" aria-live="polite">
+                    <span className="task-toast-icon">{taskNotice.type === "success" ? "✓" : "!"}</span>
+                    <span>{taskNotice.message}</span>
+                </div>
+            )}
+
             {uri && (
                 <div style={{ padding: "30px" }}>
                     <img src={"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(uri)} alt="QR"/>
@@ -178,6 +212,19 @@ function Dashboard() {
                             <textarea value={taskDetails} onChange={(e) => setTaskDetails(e.target.value)} placeholder="Enter task details" style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc", minHeight: "60px", resize: "vertical" }} />
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                            <label style={{ fontWeight: "bold", fontSize: "14px" }}>Team:</label>
+                            <select
+                                value={taskTeamId}
+                                onChange={(e) => setTaskTeamId(e.target.value)}
+                                style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc", backgroundColor: "white" }}
+                            >
+                                <option value="" disabled>Select team</option>
+                                {teams.map(team => (
+                                    <option key={team.id} value={team.id}>{team.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                             <label style={{ fontWeight: "bold", fontSize: "14px" }}>Start Date (מועד התחלה):</label>
                             <input type="datetime-local" value={taskStartDate} onChange={(e) => setTaskStartDate(e.target.value)} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }} />
                         </div>
@@ -185,9 +232,14 @@ function Dashboard() {
                             <label style={{ fontWeight: "bold", fontSize: "14px" }}>Hours Estimate (הערכת שעות):</label>
                             <input type="number" value={taskHoursEstimate} onChange={(e) => setTaskHoursEstimate(e.target.value)} placeholder="e.g. 5" style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }} />
                         </div>
+                        {taskValidationMessage && (
+                            <p style={{ margin: 0, color: "#b42318", fontSize: "13px", fontWeight: 600 }}>
+                                {taskValidationMessage}
+                            </p>
+                        )}
                         <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "15px" }}>
                             <button className="secondary-button" onClick={handleCloseModal} style={{ padding: "8px 15px" }}>Cancel</button>
-                            <button className="action-button" onClick={handleSaveTask} style={{ padding: "8px 15px" }} disabled={!taskTitle}>Save</button>
+                            <button className="action-button" onClick={handleSaveTask} style={{ padding: "8px 15px" }} disabled={missingTaskFields.length > 0}>Save</button>
                         </div>
                     </div>
                 </div>
@@ -249,6 +301,7 @@ function Dashboard() {
                         <tr>
                             <th>Title</th>
                             <th>Details</th>
+                            <th>Team</th>
                             <th>Start</th>
                             <th>Hours Estimate</th>
                             <th>Status</th>
@@ -261,6 +314,7 @@ function Dashboard() {
                                     {task.title}
                                 </td>
                                 <td>{task.details || task.description}</td>
+                                <td>{task.teamName || "No team"}</td>
                                 <td>{task.start ? new Date(task.start).toLocaleString("he-IL") : "—"}</td>
                                 <td><span className="count-pill">{task.hoursEstimation}h</span></td>
                                 <td>
@@ -271,7 +325,7 @@ function Dashboard() {
                         ))}
                         {filteredTasks.length === 0 && (
                             <tr>
-                                <td className="empty-cell" colSpan="4">No tasks match your filters</td>
+                                <td className="empty-cell" colSpan="6">No tasks match your filters</td>
                             </tr>
                         )}
                         </tbody>

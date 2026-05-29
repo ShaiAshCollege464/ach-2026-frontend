@@ -25,6 +25,13 @@
     text-align: center;
 }
 
+.login-title {
+    margin: 0;
+    color: #1c1e21;
+    font-size: 28px;
+    font-weight: 800;
+}
+
 .mode-switch button:disabled {
     background: #5a8dee;
     color: white;
@@ -41,7 +48,7 @@
     flex-direction: column;
 
 }
-button {
+.login-container button {
     width: 100%;
     padding: 12px;
     background-color: #5a8dee;
@@ -51,6 +58,11 @@ button {
     font-weight: bold;
     cursor: pointer;
     transition: background 0.3s;
+}
+.login-container button:disabled {
+    background-color: #cbd5e0;
+    color: #718096;
+    cursor: not-allowed;
 }
 .execute-btn button:disabled {
     background-color: #cbd5e0;

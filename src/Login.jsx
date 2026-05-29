@@ -14,13 +14,14 @@ function Login({onLoginSuccess}) {
     return (
         <div className="login-container">
             <div className="login-box">
+                <h1 className="login-title">Login</h1>
                 <div className="input-group">
                     <input value={username} placeholder="Username" onChange={e => setUsername(e.target.value)}/>
                     <input value={password} type="password" placeholder="Password"
                            onChange={e => setPassword(e.target.value)}/>
                 </div>
                 <div className="exacute-button">
-                    <button disabled={username === null || password === null}
+                    <button disabled={username.trim().length === 0 || password.trim().length === 0}
                             onClick={async () => {
                                 if (username.length === 0 || password.length === 0) {
                                     setErrorMessage("Missing Info");

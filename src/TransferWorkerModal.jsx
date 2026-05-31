@@ -16,10 +16,10 @@ function TransferWorkerModal({ worker, onClose, onSuccess }) {
     const [loadingTeams, setLoadingTeams] = useState(true);
     const [error, setError] = useState(null);
 
-    // טעינת כל הצוותים בעת פתיחת המודל
+    // טעינת הצוותים שהמנהל רשאי להעביר אליהם
     useEffect(() => {
         axios.defaults.withCredentials = true;
-        axios.get(BACKEND_URL + "get-all-teams")
+        axios.get(BACKEND_URL + "get-teams")
             .then(response => {
                 setAllTeams(Array.isArray(response.data) ? response.data : []);
             })

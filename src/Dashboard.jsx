@@ -100,7 +100,7 @@ function Dashboard() {
         !taskTitle.trim() ? "title" : null,
         !taskDetails.trim() ? "details" : null,
         !taskTeamId ? "team" : null,
-        !taskStartDate ? "start date and time" : null,
+        !taskStartDate ? "start date" : null,
         !taskHoursEstimate ? "hours estimate" : null,
     ].filter(Boolean);
     const taskValidationMessage = missingTaskFields.length > 0
@@ -113,7 +113,7 @@ function Dashboard() {
         const params = new URLSearchParams({
             title: taskTitle,
             description: taskDetails,
-            start: taskStartDate,
+            start: taskStartDate + "T00:00",
             duration: taskHoursEstimate,
             teamId: taskTeamId,
         });
@@ -187,10 +187,6 @@ function Dashboard() {
                 </button>
             </section>
 
-            <button className="action-button" onClick={() => setIsModalOpen(true)} style={{ marginBottom: "20px", padding: "10px 20px" }}>
-                 Add Task / Team
-            </button>
-
             {isModalOpen && (
                 <div className="modal-overlay" style={{
                     position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
@@ -226,7 +222,7 @@ function Dashboard() {
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                             <label style={{ fontWeight: "bold", fontSize: "14px" }}>Start Date (מועד התחלה):</label>
-                            <input type="datetime-local" value={taskStartDate} onChange={(e) => setTaskStartDate(e.target.value)} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }} />
+                            <input type="date" value={taskStartDate} onChange={(e) => setTaskStartDate(e.target.value)} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }} />
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                             <label style={{ fontWeight: "bold", fontSize: "14px" }}>Hours Estimate (הערכת שעות):</label>
@@ -245,54 +241,54 @@ function Dashboard() {
                 </div>
             )}
 
-            <section className="panel" style={{ marginBottom: "25px", padding: "20px" }}>
-                <h3 style={{ margin: "0 0 15px 0" }}> Filters</h3>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "15px" }}>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: "5px", flex: "1 1 200px" }}>
-                        <label style={{ fontSize: "13px", fontWeight: "bold" }}>Free Search:</label>
-                        <input
-                            type="text"
-                            placeholder="Search by title or details..."
-                            value={filterText}
-                            onChange={(e) => setFilterText(e.target.value)}
-                            style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }}
-                        />
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: "5px", width: "150px" }}>
-                        <label style={{ fontSize: "13px", fontWeight: "bold" }}>Status:</label>
-                        <select
-                            value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
-                            style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc", backgroundColor: "white" }}
-                        >
-                            <option value="all">All</option>
-                            <option value="completed">Completed</option>
-                            <option value="pending">Pending</option>
-                        </select>
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: "5px", width: "150px" }}>
-                        <label style={{ fontSize: "13px", fontWeight: "bold" }}>Time:</label>
-                        <select
-                            value={filterTime}
-                            onChange={(e) => setFilterTime(e.target.value)}
-                            style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc", backgroundColor: "white" }}
-                        >
-                            <option value="all">All Times</option>
-                            <option value="future">Future Tasks</option>
-                            <option value="past">Past Tasks</option>
-                        </select>
-                    </div>
-                </div>
-            </section>
-
             <section className="panel">
                 <div className="section-header">
                     <div>
                         <h2>Total Tasks</h2>
                         <p>Showing {filteredTasks.length} out of {allTasks.length} tasks</p>
+                    </div>
+
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "15px", alignItems: "center" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <label style={{ fontSize: "13px", fontWeight: "bold", color: "#475569" }}>Search:</label>
+                            <input
+                                type="text"
+                                placeholder="Search tasks..."
+                                value={filterText}
+                                onChange={(e) => setFilterText(e.target.value)}
+                                style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", minWidth: "160px" }}
+                            />
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <label style={{ fontSize: "13px", fontWeight: "bold", color: "#475569" }}>Status:</label>
+                            <select
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                                style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", backgroundColor: "#fff" }}
+                            >
+                                <option value="all">All</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <label style={{ fontSize: "13px", fontWeight: "bold", color: "#475569" }}>Time:</label>
+                            <select
+                                value={filterTime}
+                                onChange={(e) => setFilterTime(e.target.value)}
+                                style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", backgroundColor: "#fff" }}
+                            >
+                                <option value="all">All Times</option>
+                                <option value="future">Future</option>
+                                <option value="past">Past</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button className="action-button" onClick={() => setIsModalOpen(true)}>
+                            Add Task
+                        </button>
                     </div>
                 </div>
                 <div className="table-wrap">

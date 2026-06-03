@@ -287,7 +287,7 @@ function Dashboard() {
 
                     <div>
                         <button className="action-button" onClick={() => setIsModalOpen(true)}>
-                            Add Task
+                            Add Task :D
                         </button>
                     </div>
                 </div>

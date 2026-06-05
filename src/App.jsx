@@ -16,9 +16,27 @@ function App() {
         })
     }, []);
 
+    const handleLogout = () => {
+        // מחיקת העוגייה (כפי שהמרצה הגדיר)
+        document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        // עדכון הסטייט המרכזי (במקום רענון קשיח של הדף)
+        setSignedIn(false);
+    };
+
     return (
         <div className="app-container">
             <BrowserRouter>
+                {
+                    signedIn && (
+                        <button
+                            className="secondary-button"
+                            onClick={handleLogout}
+                            style={{ borderColor: '#ff4d4d', color: '#ff4d4d' }}
+                        >
+                            Logout
+                        </button>
+                    )
+                }
                 <Routes>
                     {
                         signedIn ?

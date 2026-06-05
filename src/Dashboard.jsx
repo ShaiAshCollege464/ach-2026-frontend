@@ -182,9 +182,7 @@ function Dashboard() {
                     <p className="eyebrow">Team dashboard</p>
                     <h1>Workers Management</h1>
                 </div>
-                <button className="secondary-button" onClick={handleLogout} style={{ borderColor: '#ff4d4d', color: '#ff4d4d' }}>
-                    Logout
-                </button>
+
             </section>
 
             <button className="action-button" onClick={() => setIsModalOpen(true)} style={{ marginBottom: "20px", padding: "10px 20px" }}>

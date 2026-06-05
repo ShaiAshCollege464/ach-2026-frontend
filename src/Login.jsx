@@ -21,30 +21,25 @@ function Login({onLoginSuccess}) {
                            onChange={e => setPassword(e.target.value)}/>
                 </div>
                 <div className="exacute-button">
-                    <button disabled={username.trim().length === 0 || password.trim().length === 0}
-                            onClick={async () => {
-                                if (username.length === 0 || password.length === 0) {
-                                    setErrorMessage("Missing Info");
-                                } else if (username.length > 3 && password.length > 3) {
-                                    setErrorMessage("");
-                                    const loginData = `Login?username=${username}&password=${password}`;
-                                    axios.defaults.withCredentials = true;
-                                    await axios.get(BACKEND_URL + loginData).then(response => {
-                                            if (response.data.success === true) {
-                                                setUsername("");
-                                                setPassword("");
-                                                setErrorMessage("Login good");
-                                                localStorage.setItem("userRole", response.data.user.role);
+                    <button disabled={false}
+                            onClick={() => {
+                                setErrorMessage("");
+                                const loginData = `Login?username=${username}&password=${password}`;
+                                axios.defaults.withCredentials = true;
+                                axios.get(BACKEND_URL + loginData).then(response => {
+                                        if (response.data.success === true) {
+                                            setUsername("");
+                                            setPassword("");
+                                            setErrorMessage("Login good");
+                                            localStorage.setItem("userRole", response.data.user.role);
 
-                                                onLoginSuccess();
-                                            } else {
-                                                setErrorMessage("Login failed");
-                                            }
+                                            onLoginSuccess();
+                                        } else {
+                                            setErrorMessage("Login failed");
                                         }
-                                    )
-                                }
-                            }
-                            }
+                                    }
+                                )
+                            }}
                     >Login
                     </button>
                     {ErrorMessage && <p className="Error">{ErrorMessage}</p>}

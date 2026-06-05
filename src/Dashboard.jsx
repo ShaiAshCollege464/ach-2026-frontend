@@ -133,10 +133,7 @@ function Dashboard() {
             });
     };
 
-    const handleLogout = () => {
-        document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        window.location.href = "/";
-    };
+
 
     const filteredTasks = allTasks.filter(task => {
         const matchesText =
@@ -182,7 +179,6 @@ function Dashboard() {
                     <p className="eyebrow">Team dashboard</p>
                     <h1>Workers Management</h1>
                 </div>
-
             </section>
 
             <button className="action-button" onClick={() => setIsModalOpen(true)} style={{ marginBottom: "20px", padding: "10px 20px" }}>

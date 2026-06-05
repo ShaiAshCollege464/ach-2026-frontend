@@ -17,10 +17,20 @@ function App() {
     }, []);
 
     const handleLogout = () => {
-        // מחיקת העוגייה (כפי שהמרצה הגדיר)
-        document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        // עדכון הסטייט המרכזי (במקום רענון קשיח של הדף)
-        setSignedIn(false);
+        fetch(BACKEND_URL + "Logout", {
+            method: "POST",
+            credentials: "include", // Critical: ensures cookies are sent and Set-Cookie response is processed
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
+            .then(() => {
+                setSignedIn(false);
+            })
+            .catch((error) => {
+                console.error("Logout failed:", error);
+                setSignedIn(false); // Logout on client side even if request fails
+            });
     };
 
     return (
